@@ -104,6 +104,7 @@ void SimpleFlockingApp::setupBuffers()
 	struct Particle {
 		cl_float4 pos;
 		cl_float4 vel;
+		cl_float4 col;
 	};
 	
 	// Create initial data for buffers
@@ -112,6 +113,7 @@ void SimpleFlockingApp::setupBuffers()
 	for( int n = 0; n < FLOCK_SIZE; n++, ptr++ ){
 		ptr->pos = ocl::toCl( vec4( Rand::randVec3() * 30.0f, 1.0f ) );
 		ptr->vel = ocl::toCl( vec4( Rand::randVec3() * 0.2f, 0.0f ) );
+		ptr->col = ocl::toCl( ColorA::gray( 0.3f, 1.0f ) );
 	}
 	
 	// Create buffers
@@ -125,6 +127,7 @@ void SimpleFlockingApp::setupBuffers()
 	geom::BufferLayout instanceDataLayout;
 	instanceDataLayout.append( geom::Attrib::CUSTOM_0, 4, sizeof( Particle ), offsetof(Particle, pos), 1 );
 	instanceDataLayout.append( geom::Attrib::CUSTOM_1, 4, sizeof( Particle ), offsetof(Particle, vel), 1 );
+	instanceDataLayout.append( geom::Attrib::CUSTOM_2, 4, sizeof( Particle ), offsetof(Particle, col), 1 );
 	coneMesh->appendVbo( instanceDataLayout, mGlFlockParticle );
 	
 	auto shader = gl::GlslProg::create( gl::GlslProg::Format()
@@ -132,8 +135,11 @@ void SimpleFlockingApp::setupBuffers()
 										.fragment( loadAsset( "render.frag" ) ) );
 	
 	mBatch = gl::Batch::create( coneMesh, shader,
-							   { { geom::Attrib::CUSTOM_0, "instPosition" },
-								   { geom::Attrib::CUSTOM_1, "instVelocity" } } );
+							   {
+								   { geom::Attrib::CUSTOM_0, "instPosition" },
+								   { geom::Attrib::CUSTOM_1, "instVelocity" },
+								   { geom::Attrib::CUSTOM_2, "instColor" }
+							   } );
 }
 
 void SimpleFlockingApp::setupClProgram()

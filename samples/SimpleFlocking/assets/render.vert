@@ -13,6 +13,7 @@ uniform mat4 ciModelViewProjection;
 in vec4 ciPosition;
 in vec4 instPosition;
 in vec4 instVelocity;
+in vec4 instColor;
 
 out vec3 vColor;
 
@@ -46,7 +47,8 @@ void main(void)
 	mat3 rotation = rotateByDirection( instVelocity.rgb );
 	vec3 pos = ciPosition.xyz;
 	pos = rotation * pos;
-	vColor = instVelocity.rgb;
+//	vColor = instVelocity.rgb;
+	vColor = instColor.rgb;
 	// Output position
 	gl_Position = ciModelViewProjection * vec4(vec3(pos + instPosition.xyz), 1.0);
 }

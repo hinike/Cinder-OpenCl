@@ -1,6 +1,7 @@
 struct Particle {
 	float4 pos;
 	float4 vel;
+	float4 col;
 };
 
 __kernel void  update( __global struct Particle *particles,
@@ -24,6 +25,7 @@ __kernel void  update( __global struct Particle *particles,
 	
 	float3 myPosition = particles[index].pos.xyz;
 	float3 myVelocity = particles[index].vel.xyz;
+	float3 col = float3( 0.2 );
 	// Apply rules 1 and 2 for my member in the flock (based on all other
 	// members)
 	for( int i=0; i<uFlockSize; i++ ){
@@ -33,16 +35,22 @@ __kernel void  update( __global struct Particle *particles,
 			
 			float3 dir			= myPosition - theirPosition;
 			float distSqrd		= dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;
-			
+
+			col = float3( 0.85f, 0.45f, 0 );
+
 			if( distSqrd < uZoneRadiusSqrd - crowded * 0.01f ){
 				float percent		= distSqrd/uZoneRadiusSqrd;
 				float3 dirNorm		= normalize( dir );
-				
+
+				col = float3( 1, 1, 0 );
+
 				// repulsion
 				if( percent < uMinThresh ){
 					float F			= ( uMinThresh/percent - 1.0f ) * uRepelStrength;
 					acc				+= dirNorm * F * uTimeDelta;
 					crowded			+= ( 1.0f - percent ) * 2.0f;
+
+					col = float3( 1, 0, 0 );
 				}
 				else if( percent < uMaxThresh )
 				{	// alignment
@@ -52,6 +60,8 @@ __kernel void  update( __global struct Particle *particles,
 					float F					= ( 1.0f - ( cos( adjustedPercent * 6.28318f ) * -0.5f + 0.5f ) ) * uAlignStrength;
 					acc						+= normalize( theirVelocity ) * F * uTimeDelta;
 					crowded					+= ( 1.0f - percent ) * 0.5f;
+
+					col = float3( 0, 1, 0 );
 				}
 				else
 				{	// attraction
@@ -60,6 +70,8 @@ __kernel void  update( __global struct Particle *particles,
 					float F					= ( 1.0f - ( cos( adjustedPercent * 6.28318f ) * -0.5f + 0.5f ) ) * uAttractStrength;
 					acc						-= dirNorm * F * uTimeDelta;
 					crowded					+= ( 1.0f - percent ) * 0.25f;
+
+					col = float3( 0, 0, 1 );
 				}
 			}
 		}
@@ -85,10 +97,12 @@ __kernel void  update( __global struct Particle *particles,
 	
 	
 	float3 outVelocity = newVel;
-	
+
 	particles[index].pos.xyz = outPosition;
 	particles[index].vel.xyz = outVelocity;
-	
+
+//	particles[index].col = float4( col, 1 ); // set color according to behavior
+	particles[index].col = float4( 1, 0, 0, 1 ); // set all to red
 }
 
 
@@ -188,5 +202,6 @@ __kernel void  smartUpdate( __global float4 *positions,
 	
 	positions[globalIndex].xyz = outPosition;
 	velocities[globalIndex].xyz = outVelocity;
+
 	
 }
